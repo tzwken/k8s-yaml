@@ -1,0 +1,59 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  labels:
+    prometheus: k8s
+  name: k8s
+  namespace: monitoring
+spec:
+  affinity:
+   nodeAffinity:
+     requiredDuringSchedulingIgnoredDuringExecution:
+       nodeSelectorTerms:
+       - matchExpressions:
+         - key: kubernetes.io/role
+           operator: In
+           values:
+           - 'master'
+  tolerations:
+  - operator: "Exists"
+    effect: "NoSchedule"
+  alerting:
+    alertmanagers:
+    - name: alertmanager-main
+      namespace: monitoring
+      port: web
+  volumes:
+  - hostPath:
+      path: /data/k8s/prometheus
+    name: prometheus-k8s-db-local
+  baseImage: quay.io/prometheus/prometheus
+  containers:
+  - name: prometheus
+    volumeMounts:
+    - name: prometheus-k8s-db-local
+      mountPath: /prometheus
+  nodeSelector:
+    kubernetes.io/os: linux
+  podMonitorSelector: {}
+  replicas: 2
+  additionalScrapeConfigs:
+    name: additional-scrape-configs
+    key: prometheus-additional.yaml
+  resources:
+    requests:
+      memory: 400Mi
+  externalUrl: http://prometheus.szairport.com
+  retention: 30d
+  ruleSelector:
+    matchLabels:
+      prometheus: k8s
+      role: alert-rules
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+  serviceAccountName: prometheus-k8s
+  serviceMonitorNamespaceSelector: {}
+  serviceMonitorSelector: {}
+  version: v2.11.0

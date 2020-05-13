@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  rules:
+  - host: dashboard.szairport.com
+    http:
+      paths:
+      - backend:
+          serviceName: kubernetes-dashboard
+          servicePort: 443
+        path: /
+  tls:
+  - hosts:
+    - dashboard.szairport.com
