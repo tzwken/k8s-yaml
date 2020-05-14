@@ -9,7 +9,7 @@ spec:
     name: client
   - port: 12380
     name: peer
-  #clusterIP: None
+  clusterIP: None
   selector:
     etcd: etcd-cluster
 
@@ -79,11 +79,6 @@ spec:
         image: registry.cn-beijing.aliyuncs.com/icsoc/etcd:v2
         imagePullPolicy: IfNotPresent
         name: etcd-node
-        ports:
-        - containerPort: 12379
-          hostPort: 12379
-          protocol: TCP
-        resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
