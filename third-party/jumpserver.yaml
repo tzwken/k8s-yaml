@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: jumpserver
+  name: jumpserver
+  namespace: third-party
+spec:
+  ports:
+  - name: web
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  - name: web-ssh
+    port: 2222
+    protocol: TCP
+    targetPort: 2222
+  selector:
+    app: jumpserver
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: jumpserver
+  name: jumpserver
+  namespace: third-party
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: jumpserver
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: jumpserver
+    spec:
+      containers:
+      - image: registry.cn-beijing.aliyuncs.com/icsoc/jumpserver_all:latest
+        imagePullPolicy: IfNotPresent
+        name: jumpserver
+        ports:
+        - containerPort: 80
+          name: web
+          protocol: TCP
+        - containerPort: 2222
+          name: web-ssh
+          protocol: TCP     
+        env:
+        - name: SECRET_KEY
+          value: fGbP3Nmapkz3zirAQ3YqJchgNMUefgEsWuavLQj1wk4cmjuycP
+        - name: BOOTSTRAP_TOKEN
+          value: eQlAXs41NjyDggzm
+        - name: DB_HOST
+          value: haproxy.third-party.svc
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_USER
+          value: root
+        - name: DB_PASSWORD
+          value: wintel
+        - name: DB_NAME
+          value: jumpserver 
+        - name: http_proxy
+          value: 'http://localhost:13081'
+        - name: https_proxy
+          value: 'http://localhsot:13081'
+        resources:
+          limits:
+            cpu: '2'
+            memory: 2000Mi
+          requests:
+            cpu: 300m
+            memory: 1000Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: third-party
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+  name: jumpserver-ingress
+  namespace: third-party
+spec:
+  rules:
+  - host: jumpserver.test.local
+    http:
+      paths:
+      - backend:
+          serviceName: jumpserver
+          servicePort: 80
+        path: /
+---
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5jbi1iZWlqaW5nLmFsaXl1bmNzLmNvbSI6eyJ1c2VybmFtZSI6ImltQGljc29jIiwicGFzc3dvcmQiOiJmNDQ3YjIwIiwiZW1haWwiOiJ6aGFuZ2hhb0BpY3NvYy5uZXQiLCJhdXRoIjoiYVcxQWFXTnpiMk02WmpRME4ySXlNQT09In19fQo=
+kind: Secret
+metadata:
+  name: third-party
+  namespace: third-party
+type: kubernetes.io/dockerconfigjson

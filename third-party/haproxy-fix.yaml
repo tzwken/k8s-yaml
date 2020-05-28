@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: haproxy
+  name: haproxy
+  namespace: third-party
+spec:
+  ports:
+  - name: mq
+    port: 5672
+    protocol: TCP
+    targetPort: 5672
+  - name: redis-sentinel
+    port: 26379
+    protocol: TCP
+    targetPort: 26379
+  - name: redis
+    port: 6379
+    protocol: TCP
+    targetPort: 6379
+  - name: mongodb
+    port: 17017
+    protocol: TCP
+    targetPort: 17017
+  - name: mysql
+    port: 3306
+    protocol: TCP
+    targetPort: 3306
+  - name: fastdfs
+    port: 22122
+    protocol: TCP
+    targetPort: 22122
+  - name: nginx-fdfs
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: elast-9200
+    port: 9200
+    protocol: TCP
+    targetPort: 9200
+  - name: elast-9300
+    port: 9300
+    protocol: TCP
+    targetPort: 9300
+  - name: gid-server
+    port: 5018
+    protocol: TCP
+    targetPort: 5018
+  selector:
+    app: haproxy
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: haproxy
+  name: haproxy
+  namespace: third-party
+spec:
+  replicas: 3
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: haproxy
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: haproxy
+    spec:
+      containers:
+      - image: haproxy:1.8.23-alpine
+        imagePullPolicy: IfNotPresent
+        name: haproxy
+        ports:
+        - containerPort: 5672
+          name: mq
+          protocol: TCP
+        - containerPort: 26379
+          name: redis-sentinel
+          protocol: TCP
+        - containerPort: 6379
+          name: redis
+          protocol: TCP
+        - containerPort: 17017
+          name: mongodb
+          protocol: TCP
+        - containerPort: 3306
+          name: mysql
+          protocol: TCP
+        - containerPort: 22122
+          name: fastdfs
+          protocol: TCP
+        - containerPort: 8080
+          name: nginx-fdfs
+          protocol: TCP
+        - containerPort: 9200
+          name: elast-9200
+          protocol: TCP
+        - containerPort: 9300
+          name: elast-9300
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /usr/local/etc/haproxy/haproxy.cfg
+          name: haproxy-config
+          readOnly: true
+          subPath: haproxy.cfg
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: haproxy.cfg
+            path: haproxy.cfg
+          name: haproxy
+        name: haproxy-config

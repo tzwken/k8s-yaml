@@ -1,0 +1,169 @@
+apiVersion: v1
+data:
+  haproxy.cfg: |-
+    global
+            user root
+            group root
+            daemon
+            nbproc 2
+    defaults
+            log     global
+            timeout connect 5s
+            timeout client  10m
+            timeout server  10m
+    listen mysql
+            bind 0.0.0.0:3306
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server mysql-1 192.168.19.50:3306 check inter 10s fall 2 rise 2 weight 1
+            server mysql-2 192.168.19.31:3306 check inter 10s fall 2 rise 2 weight 1
+            server mysql-3 192.168.19.44:3306 check inter 10s fall 2 rise 2 weight 1
+    listen mq
+            bind 0.0.0.0:5672
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server mq-1 192.168.20.5:5672 check inter 10s fall 2 rise 2 weight 1
+            server mq-2 192.168.20.27:5672 check inter 10s fall 2 rise 2 weight 1
+            server mq-3 192.168.20.56:5672 check inter 10s fall 2 rise 2 weight 1
+    listen mongodb
+            bind 0.0.0.0:17017
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server mongodb-1 192.168.20.5:17017 check inter 10s fall 2 rise 2 weight 1
+            server mongodb-2 192.168.20.27:17017 check inter 10s fall 2 rise 2 weight 1
+            server mongodb-3 192.168.20.56:17017 check inter 10s fall 2 rise 2 weight 1
+    listen elast-9200
+            bind 0.0.0.0:9200
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server elast-1 192.168.20.3:9200 check inter 10s fall 2 rise 2 weight 1
+            server elast-2 192.168.20.37:9200 check inter 10s fall 2 rise 2 weight 1
+            server elast-3 192.168.20.13:9200 check inter 10s fall 2 rise 2 weight 1
+    listen elast-9300
+            bind 0.0.0.0:9300
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server elast-1 192.168.20.3:9300 check inter 10s fall 2 rise 2 weight 1
+            server elast-2 192.168.20.37:9300 check inter 10s fall 2 rise 2 weight 1
+            server elast-3 192.168.20.13:9300 check inter 10s fall 2 rise 2 weight 1
+    listen redis-sentinel
+            bind 0.0.0.0:26379
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server redis-1 192.168.20.3:26379 check inter 10s fall 2 rise 2 weight 1
+            server redis-2 192.168.20.37:26379 check inter 10s fall 2 rise 2 weight 1
+            server redis-3 192.168.20.13:26379 check inter 10s fall 2 rise 2 weight 1
+    listen redis
+            bind 0.0.0.0:6379
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            timeout server  150m
+            timeout client  150m
+            option tcp-check
+            tcp-check send AUTH\ wintel\r\n
+            tcp-check send info\ replication\r\n
+            tcp-check expect string role:master
+            server redis-1 192.168.20.3:6379 maxconn 1024 check inter 5s
+            server redis-2 192.168.20.37:6379 maxconn 1024 check inter 5s
+            server redis-3 192.168.20.13:6379 maxconn 1024 check inter 5s
+    listen fastdfs
+            bind 0.0.0.0:22122
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server fastdfs-1 192.168.20.3:22122 check inter 10s fall 2 rise 2 weight 1
+            server fastdfs-2 192.168.20.37:22122 check inter 10s fall 2 rise 2 weight 1
+    listen nginx-fdfs
+            bind 0.0.0.0:8080
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server nginx-fdfs-1 192.168.20.5:80 check inter 10s fall 2 rise 2 weight 1
+            server nginx-fdfs-2 192.168.20.27:80 check inter 10s fall 2 rise 2 weight 1
+            server nginx-fdfs-3 192.168.20.56:80 check inter 10s fall 2 rise 2 weight 1
+    listen reload-5015
+            bind 0.0.0.0:5015
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server grpc 192.168.19.12:5015 check inter 10s fall 2 rise 2 weight 1
+    listen socket-5016
+            bind 0.0.0.0:5016
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server grpc 192.168.19.12:5016 check inter 10s fall 2 rise 2 weight 1
+    listen grpc
+            bind 0.0.0.0:5017
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server grpc 192.168.19.12:5017 check inter 10s fall 2 rise 2 weight 1
+    listen record
+            bind 0.0.0.0:88
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server record1 192.168.19.12:88 check inter 10s fall 2 rise 2 weight 1
+            server record2 192.168.19.57:88 check inter 10s fall 2 rise 2 weight 1
+    listen upload-5033
+            bind 0.0.0.0:5033
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server record2 192.168.19.12:5033 check inter 10s fall 2 rise 2 weight 1
+    listen wxbot
+            bind 0.0.0.0:2888
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server wxbot 10.71.248.86:2888 check inter 10s fall 2 rise 2 weight 1
+    listen oneid
+            bind 0.0.0.0:2887
+            mode tcp
+            option tcplog
+            option dontlognull
+            option dontlog-normal
+            balance roundrobin
+            server wxbot 10.71.248.86:2887 check inter 10s fall 2 rise 2 weight 1
+kind: ConfigMap
+metadata:
+  name: haproxy
+  namespace: third-party
