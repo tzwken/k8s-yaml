@@ -77,6 +77,8 @@ spec:
           value: 'http://localhost:13081'
         - name: https_proxy
           value: 'http://localhsot:13081'
+        - name: no_proxy
+          value: '127.0.0.1,localhost,haproxy.third-party,haproxy-third-party.svc'
         resources:
           limits:
             cpu: '2'
