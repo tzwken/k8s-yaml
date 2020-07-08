@@ -26,6 +26,7 @@ spec:
   volumes:
   - hostPath:
       path: /data/k8s/prometheus
+      type: DirectoryOrCreate
     name: prometheus-k8s-db-local
   baseImage: quay.io/prometheus/prometheus
   containers:

@@ -87,6 +87,7 @@ spec:
       volumes:
       - hostPath:
           path: /data/k8s/etcd
+          type: DirectoryOrCreate
         name: etcddata
       dnsPolicy: ClusterFirst
       imagePullSecrets:
