@@ -70,13 +70,14 @@ spec:
             --advertise-client-urls http://${HOSTNAME}.etcd-cluster:12379 \
             --initial-advertise-peer-urls http://${HOSTNAME}.etcd-cluster:12380 \
             --initial-cluster-token etcd-cluster \
+            --data-dir /etcddata/${HOSTNAME} \
             --initial-cluster ${PEERS} \
             --initial-cluster-state new
             #--initial-cluster-state existing
         env:
         - name: CLUSTER_SIZE
           value: "3"
-        image: registry.cn-beijing.aliyuncs.com/icsoc/etcd:v2
+        image: tzwken/etcd:v2
         imagePullPolicy: IfNotPresent
         name: etcd-node
         terminationMessagePath: /dev/termination-log
@@ -91,5 +92,5 @@ spec:
         name: etcddata
       dnsPolicy: ClusterFirst
       imagePullSecrets:
-      - name: chat-prod
+      - name: default-reg
       restartPolicy: Always
