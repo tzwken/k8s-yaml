@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: etcd-cluster
-  namespace: default
+  namespace: third-party
 spec:
   ports:
   - port: 12379
@@ -21,7 +21,7 @@ metadata:
   labels:
     etcd: etcd-cluster
   name: etcd-node
-  namespace: default
+  namespace: third-party
 spec:
   replicas: 3
   selector:
@@ -64,15 +64,30 @@ spec:
           for i in $(seq 0 $((${CLUSTER_SIZE} - 1))); do
               PEERS="${PEERS}${PEERS:+,}etcd-node-${i}=http://etcd-node-${i}.etcd-cluster:12380"
           done
-          exec /usr/bin/etcd --name ${HOSTNAME} \
-            --listen-peer-urls http://${IP}:12380 \
-            --listen-client-urls http://${IP}:12379,http://127.0.0.1:12379 \
-            --advertise-client-urls http://${HOSTNAME}.etcd-cluster:12379 \
-            --initial-advertise-peer-urls http://${HOSTNAME}.etcd-cluster:12380 \
-            --initial-cluster-token etcd-cluster \
-            --data-dir /etcddata/${HOSTNAME} \
-            --initial-cluster ${PEERS} \
-            --initial-cluster-state new
+          export ETCD_INITIAL_CLUSTER="${PEERS}"
+          export ETCD_NAME="${HOSTNAME}"
+          export ETCD_DATA_DIR="/etcddata/${HOSTNAME}"
+          export ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluste"
+          export ETCD_LISTEN_PEER_URLS="http://${IP}:12380"
+          export ETCD_LISTEN_CLIENT_URLS="http://${IP}:12379,http://127.0.0.1:12379"
+          export ETCD_ADVERTISE_CLIENT_URLS="http://${HOSTNAME}.etcd-cluster:12379"
+          export ETCD_INITIAL_ADVERTISE_PEER_URLS="http://${HOSTNAME}.etcd-cluster:12380"
+          if [ -f "/etcddata/lock" ];then
+            export ETCD_INITIAL_CLUSTER_STATE="existing"
+          else
+            export ETCD_INITIAL_CLUSTER_STATE="new"
+            echo "lock" >/etcddata/lock
+          fi
+          exec /usr/bin/etcd #\
+            #--name ${HOSTNAME} \
+            #--data-dir /etcddata/${HOSTNAME} \
+            #--initial-cluster-token etcd-cluster \
+            #--listen-peer-urls http://${IP}:12380 \
+            #--listen-client-urls http://${IP}:12379,http://127.0.0.1:12379 \
+            #--advertise-client-urls http://${HOSTNAME}.etcd-cluster:12379 \
+            #--initial-advertise-peer-urls http://${HOSTNAME}.etcd-cluster:12380 \
+            #--initial-cluster ${PEERS}
+            #--initial-cluster-state new
             #--initial-cluster-state existing
         env:
         - name: CLUSTER_SIZE
@@ -91,6 +106,6 @@ spec:
           type: DirectoryOrCreate
         name: etcddata
       dnsPolicy: ClusterFirst
-      imagePullSecrets:
-      - name: default-reg
+      #imagePullSecrets:
+      #- name: default-reg
       restartPolicy: Always
