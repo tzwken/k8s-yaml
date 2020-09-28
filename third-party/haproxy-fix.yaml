@@ -49,8 +49,11 @@ spec:
     targetPort: 5018
   selector:
     app: haproxy
-  sessionAffinity: None
   type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
 ---
 apiVersion: apps/v1
 kind: Deployment

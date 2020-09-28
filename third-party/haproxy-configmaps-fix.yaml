@@ -17,10 +17,10 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
-            balance roundrobin
-            server mysql-1 192.168.19.50:3306 check inter 10s fall 2 rise 2 weight 1
-            server mysql-2 192.168.19.31:3306 check inter 10s fall 2 rise 2 weight 1
-            server mysql-3 192.168.19.44:3306 check inter 10s fall 2 rise 2 weight 1
+            balance source
+            server mysql-1 192.168.19.50:3306 check inter 10s fall 2 rise 2
+            server mysql-2 192.168.19.31:3306 check inter 10s fall 2 rise 2
+            server mysql-3 192.168.19.44:3306 check inter 10s fall 2 rise 2
     listen mq
             bind 0.0.0.0:5672
             mode tcp
@@ -37,7 +37,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
-            balance roundrobin
+            balance leastconn
             server mongodb-1 192.168.20.5:17017 check inter 10s fall 2 rise 2 weight 1
             server mongodb-2 192.168.20.27:17017 check inter 10s fall 2 rise 2 weight 1
             server mongodb-3 192.168.20.56:17017 check inter 10s fall 2 rise 2 weight 1
