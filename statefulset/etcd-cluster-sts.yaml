@@ -1,0 +1,134 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd-cluster
+  namespace: third-party
+spec:
+  ports:
+  - port: 12379
+    name: client
+  - port: 12380
+    name: peer
+  clusterIP: None
+  selector:
+    etcd: etcd-cluster
+
+---
+
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: "etcd-pdb"
+  namespace: third-party
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      etcd: etcd-cluster
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    etcd: etcd-cluster
+  name: etcd-node
+  namespace: third-party
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      etcd: etcd-cluster
+  serviceName: etcd-cluster
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        etcd: etcd-cluster
+      name: etcd-node
+    spec:
+      affinity:
+       nodeAffinity:
+         requiredDuringSchedulingIgnoredDuringExecution:
+           nodeSelectorTerms:
+           - matchExpressions:
+             - key: third-party/app
+               operator: In
+               values:
+               - 'etcd'
+       podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: etcd
+                operator: In
+                values:
+                - "etcd-cluster"
+            topologyKey: kubernetes.io/hostname
+      tolerations:
+      - operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - command:
+        - "/bin/sh"
+        - "-ecx"
+        - |
+          IP=$(hostname -i)
+          for i in $(seq 0 $((${CLUSTER_SIZE} - 1))); do
+            while true; do
+              echo "Waiting for etcd-node-${i}.etcd-cluster to come up"
+              ping -W 1 -c 1 etcd-node-${i}.etcd-cluster > /dev/null && break
+              sleep 1s
+            done
+          done
+          PEERS=""
+          for i in $(seq 0 $((${CLUSTER_SIZE} - 1))); do
+              PEERS="${PEERS}${PEERS:+,}etcd-node-${i}=http://etcd-node-${i}.etcd-cluster:12380"
+          done
+          export ETCD_INITIAL_CLUSTER="${PEERS}"
+          export ETCD_NAME="${HOSTNAME}"
+          export ETCD_DATA_DIR="/etcddata/${HOSTNAME}"
+          export ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluste"
+          export ETCD_LISTEN_PEER_URLS="http://${IP}:12380"
+          export ETCD_LISTEN_CLIENT_URLS="http://${IP}:12379,http://127.0.0.1:12379"
+          export ETCD_ADVERTISE_CLIENT_URLS="http://${HOSTNAME}.etcd-cluster:12379"
+          export ETCD_INITIAL_ADVERTISE_PEER_URLS="http://${HOSTNAME}.etcd-cluster:12380"
+          if [ -f "/etcddata/lock" ];then
+            export ETCD_INITIAL_CLUSTER_STATE="existing"
+          else
+            export ETCD_INITIAL_CLUSTER_STATE="new"
+            echo "lock" >/etcddata/lock
+          fi
+          exec /usr/bin/etcd #\
+            #--name ${HOSTNAME} \
+            #--data-dir /etcddata/${HOSTNAME} \
+            #--initial-cluster-token etcd-cluster \
+            #--listen-peer-urls http://${IP}:12380 \
+            #--listen-client-urls http://${IP}:12379,http://127.0.0.1:12379 \
+            #--advertise-client-urls http://${HOSTNAME}.etcd-cluster:12379 \
+            #--initial-advertise-peer-urls http://${HOSTNAME}.etcd-cluster:12380 \
+            #--initial-cluster ${PEERS}
+            #--initial-cluster-state new
+            #--initial-cluster-state existing
+        env:
+        - name: CLUSTER_SIZE
+          value: "3"
+        image: tzwken/etcd:v2
+        imagePullPolicy: IfNotPresent
+        name: etcd-node
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - name: etcddata
+          mountPath: /etcddata
+      volumes:
+      - hostPath:
+          path: /data/k8s/etcd
+          type: DirectoryOrCreate
+        name: etcddata
+      dnsPolicy: ClusterFirst
+      #imagePullSecrets:
+      #- name: default-reg
+      restartPolicy: Always
