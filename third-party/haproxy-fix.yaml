@@ -79,6 +79,15 @@ spec:
       labels:
         app: haproxy
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 5
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  name: haproxy
       containers:
       - image: haproxy:1.8.23-alpine
         imagePullPolicy: IfNotPresent

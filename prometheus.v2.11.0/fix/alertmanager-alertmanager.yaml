@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Alertmanager
+metadata:
+  labels:
+    alertmanager: main
+  name: main
+  namespace: monitoring
+spec:
+  baseImage: quay.io/prometheus/alertmanager
+  externalUrl: 'https://ncc-alert.sany.com.cn'
+  affinity:
+   nodeAffinity:
+     requiredDuringSchedulingIgnoredDuringExecution:
+       nodeSelectorTerms:
+         - matchExpressions:
+             - key: kubernetes.io/role
+               operator: In
+               values:
+                 - master
+  tolerations:
+   - operator: Exists
+     effect: NoSchedule
+  nodeSelector:
+    kubernetes.io/os: linux
+  replicas: 2
+  retention: 1h
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+  serviceAccountName: alertmanager-main
+  version: v0.18.0

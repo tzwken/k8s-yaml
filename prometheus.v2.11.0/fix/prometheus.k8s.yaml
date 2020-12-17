@@ -29,6 +29,8 @@ spec:
       type: DirectoryOrCreate
     name: prometheus-k8s-db-local
   baseImage: quay.io/prometheus/prometheus
+  externalLabels:
+    prometheus: monitoring/k8s-master
   containers:
   - name: prometheus
     volumeMounts:
