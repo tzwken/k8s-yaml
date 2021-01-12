@@ -90,6 +90,11 @@ spec:
                   name: haproxy
       containers:
       - image: haproxy:1.8.23-alpine
+        command:
+            - sh
+            - '-c'
+            - >
+              /sbin/syslogd -O /proc/1/fd/1; exec haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg
         imagePullPolicy: IfNotPresent
         name: haproxy
         ports:

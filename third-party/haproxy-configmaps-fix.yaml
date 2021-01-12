@@ -6,11 +6,17 @@ data:
             group root
             daemon
             nbproc 2
+            log /dev/log local0 err
     defaults
             log     global
             timeout connect 5s
-            timeout client  10m
-            timeout server  10m
+            timeout queue 10s
+            timeout check 10s
+            timeout client-fin 5s
+            timeout server-fin 5s
+            timeout client 30s
+            timeout server 30s
+            timeout tunnel 5m
     listen mysql
             bind 0.0.0.0:3306
             mode tcp
