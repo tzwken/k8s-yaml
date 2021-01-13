@@ -5,7 +5,7 @@ data:
             user root
             group root
             daemon
-            nbproc 2
+            nbproc 4
             log /dev/log local0 err
     defaults
             log     global

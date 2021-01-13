@@ -64,6 +64,7 @@ metadata:
   namespace: third-party
 spec:
   replicas: 3
+  minReadySeconds: 35
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -132,6 +133,14 @@ spec:
           requests:
             cpu: 100m
             memory: 50Mi
+        readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
