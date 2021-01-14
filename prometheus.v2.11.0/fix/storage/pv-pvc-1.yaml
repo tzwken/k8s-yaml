@@ -1,0 +1,39 @@
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: prometheus-pv-1
+  labels:
+    pvname: prometheus-pv-1
+spec:
+  capacity:
+    storage: 500Gi
+  flexVolume:
+    driver: alicloud/nas
+    options:
+      mode: '755'
+      path: /prometheus/1
+      server: 135a748b7a-ego56.cn-beijing.nas.aliyuncs.com
+      vers: '3'
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: prometheus-data-db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-prometheus-k8s-1
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Gi
+  selector:
+    matchLabels:
+      pvname: prometheus-pv-1
+  storageClassName: prometheus-data-db
+  volumeMode: Filesystem
+  volumeName: prometheus-pv-1
