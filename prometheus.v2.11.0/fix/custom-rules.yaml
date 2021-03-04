@@ -1,0 +1,64 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: custom-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: Node-group
+    rules:
+    - alert: CPUThrottlingHigh
+      annotations:
+        message: Node - {{ $labels.instance }} CPU is Too High / 20 minutes.
+        summary: 'CPU使用率: {{ printf "%.2f" $value }}'
+      expr: |
+        100 - avg(irate(node_cpu_seconds_total{mode="idle"}[20m])) by (instance) * 100 > 75
+      for: 10m
+      labels:
+        severity: critical
+    - alert: CPUIOwaitHigh
+      annotations:
+        message: Node - {{ $labels.instance }} IOwait is Too High
+        summary: 'CPU IOwait: {{ printf "%.2f" $value }}'
+      expr: |
+        avg  by (instance) (irate(node_cpu_seconds_total{mode="iowait"}[10m])) * 100 > 30
+      for: 10m
+      labels:
+        severity: critical
+  - name: container-group
+    rules:
+    - alert: 容器可用内存小于20M
+      annotations:
+        message: '{{ printf "%0.2f" $value }}MB可用内存'
+      expr: |
+        ( sum by(namespace,pod,container)(container_spec_memory_limit_bytes{job="kubelet",container!="POD",image!=""}) - sum by(namespace,pod,container)(container_memory_working_set_bytes{job="kubelet",container!="POD",image!=""}) ) / 1024 / 1024 < 20 AND (sum by(namespace,pod,container)(container_spec_memory_limit_bytes{job="kubelet",container!="POD",image!=""}) > 200 * 1024 * 1024 )
+      for: 30m
+      labels:
+        severity: critical
+    - alert: 节点内存使用率大于85%
+      annotations:
+        message: 已使用{{ printf "%0.2f" $value }}%
+      expr: sum by (instance) (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))*
+        100 > 85
+      for: 10m
+      labels:
+        severity: critical
+    - alert: 容器磁盘空间使用
+      annotations:
+        message: 容器{{ $labels.pod }}磁盘空间使用量大于节点{{ printf "%0.2f" $value }}%
+      expr: sum by (node,instance,namespace,pod) (container_fs_usage_bytes{pod !=""}
+        / container_fs_limit_bytes{pod !=""}) * 100 > 30
+      for: 1h
+      labels:
+        severity: critical
+    - alert: InodeUsageThrottlingHigh
+      annotations:
+        message: 容器{{ $labels.pod }}inode使用量大于500万个:{{ $value }}
+      expr: sum by (node,instance,pod,namespace) (container_fs_inodes_total{pod !=
+        ""}) > 5000000
+      for: 1h
+      labels:
+        severity: critical
