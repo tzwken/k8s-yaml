@@ -28,6 +28,14 @@ spec:
       for: 10m
       labels:
         severity: critical
+    - alert: 节点内存使用率大于85%
+      annotations:
+        message: 已使用{{ printf "%0.2f" $value }}%
+      expr: sum by (instance) (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))
+        * 100 > 85
+      for: 10m
+      labels:
+        severity: critical
   - name: container-group
     rules:
     - alert: 容器可用内存小于20M
@@ -38,27 +46,19 @@ spec:
       for: 30m
       labels:
         severity: critical
-    - alert: 节点内存使用率大于85%
+    - alert: 容器磁盘空间使用过大
       annotations:
-        message: 已使用{{ printf "%0.2f" $value }}%
-      expr: sum by (instance) (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))*
-        100 > 85
-      for: 10m
-      labels:
-        severity: critical
-    - alert: 容器磁盘空间使用
-      annotations:
-        message: 容器{{ $labels.pod }}磁盘空间使用量大于节点{{ printf "%0.2f" $value }}%
-      expr: sum by (node,instance,namespace,pod) (container_fs_usage_bytes{pod !=""}
-        / container_fs_limit_bytes{pod !=""}) * 100 > 30
+        message: '容器{{ $labels.pod }}磁盘空间使用与节点比值{{ printf "%0.2f" $value }}%'
+      expr: |
+        sum by (node,instance,namespace,pod) (container_fs_usage_bytes{pod !=""} / container_fs_limit_bytes{pod !=""}) * 100 > 30
       for: 1h
       labels:
         severity: critical
     - alert: InodeUsageThrottlingHigh
       annotations:
-        message: 容器{{ $labels.pod }}inode使用量大于500万个:{{ $value }}
-      expr: sum by (node,instance,pod,namespace) (container_fs_inodes_total{pod !=
-        ""}) > 5000000
+        message: 'Too much file system usage by {{ $labels.pod }}, Inode usage is {{ $value }}'
+      expr: |
+        sum by (node,instance,pod,namespace) (container_fs_inodes_total{pod != ""}) > 10000 * 300
       for: 1h
       labels:
         severity: critical
