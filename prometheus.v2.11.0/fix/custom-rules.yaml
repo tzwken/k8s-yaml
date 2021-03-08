@@ -48,7 +48,7 @@ spec:
         severity: critical
     - alert: 容器磁盘空间使用过大
       annotations:
-        message: '容器{{ $labels.pod }}磁盘空间使用与节点比值{{ printf "%0.2f" $value }}%'
+        message: 容器{{ $labels.pod }}磁盘空间使用与节点比值{{ printf "%0.2f" $value }}%
       expr: |
         sum by (node,instance,namespace,pod) (container_fs_usage_bytes{pod !=""} / container_fs_limit_bytes{pod !=""}) * 100 > 30
       for: 1h
@@ -56,7 +56,8 @@ spec:
         severity: critical
     - alert: InodeUsageThrottlingHigh
       annotations:
-        message: 'Too much file system usage by {{ $labels.pod }}, Inode usage is {{ $value }}'
+        message: Too much file system usage by {{ $labels.pod }}, Inode usage is {{
+          printf "%.0f" $value }}
       expr: |
         sum by (node,instance,pod,namespace) (container_fs_inodes_total{pod != ""}) > 10000 * 300
       for: 1h
