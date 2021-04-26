@@ -116,6 +116,8 @@ spec:
           readOnly: false
         - mountPath: /grafana-dashboard-definitions/0/node-exporter
           name: grafana-dashboard-node-exporter
+        - name: grafana-dashboard-java-springboot
+          mountPath: /grafana-dashboard-definitions/0/java-springboot
       nodeSelector:
         beta.kubernetes.io/os: linux
       securityContext:
@@ -206,3 +208,6 @@ spec:
       - configMap:
           name: grafana-dashboard-node-exporter
         name: grafana-dashboard-node-exporter
+      - name: grafana-dashboard-java-springboot
+        configMap:
+          name: grafana-dashboard-java-springboot
