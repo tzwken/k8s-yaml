@@ -118,6 +118,8 @@ spec:
           name: grafana-dashboard-node-exporter
         - name: grafana-dashboard-java-springboot
           mountPath: /grafana-dashboard-definitions/0/java-springboot
+        - name: grafana-dashboard-springboot21
+          mountPath: /grafana-dashboard-definitions/0/springboot21
       nodeSelector:
         beta.kubernetes.io/os: linux
       securityContext:
@@ -211,3 +213,6 @@ spec:
       - name: grafana-dashboard-java-springboot
         configMap:
           name: grafana-dashboard-java-springboot
+      - name: grafana-dashboard-springboot21
+        configMap:
+          name: grafana-dashboard-springboot21
