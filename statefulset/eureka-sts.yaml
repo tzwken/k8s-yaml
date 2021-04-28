@@ -1,0 +1,157 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: eureka-cm
+  namespace: qdpaas-prod
+data:
+  application-robot.yml: |-
+    server:
+      #  服务器端口
+      port: 8080
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: "health,prometheus"
+      endpoint:
+        prometheus:
+          enabled: true
+      metrics:
+        export:
+          prometheus:
+            enabled: true
+        web:
+          server:
+            auto-time-requests: true
+    eureka:
+      instance:
+        prefer-ip-address: true
+      client:
+        registerWithEureka: false
+        fetchRegistry: false
+        service-url:
+          defaultZone: http://user:user098@eureka-0.eureka:8080/eureka/,http://user:user098@eureka-1.eureka:8080/eureka/,http://user:user098@eureka-2.eureka:8080/eureka/
+      server:
+        enable-self-preservation: false
+        eviction-interval-timer-in-ms: 3000
+        responseCacheUpdateIntervalMs: 3000
+    spring:
+      application:
+        #   注册服务名
+        name: qdpass-eureka
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka
+  namespace: qdpaas-prod
+spec:
+  clusterIP: None
+  ports:
+    - name: eureka
+      port: 8080
+  selector:
+    app: eureka
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: eureka
+  namespace: qdpaas-prod
+spec:
+  serviceName: eureka
+  replicas: 3
+  selector:
+    matchLabels:
+      app: eureka
+  template:
+    metadata:
+      labels:
+        app: eureka
+    spec:
+      volumes:
+        - name: eureka-cm
+          configMap:
+            name: eureka-cm
+            defaultMode: 420
+      containers:
+        - name: eureka
+          image: >-
+            registry.cn-beijing.aliyuncs.com/onpremise/eureka:eureka-2021_04_23-21_23_08
+          ports:
+            - name: web
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: JAVA_OPTS_MS
+              value: 1536M
+            - name: JAVA_OPTS_MX
+              value: 1536M
+            - name: JAVA_OPTS_MDS
+              value: 128M
+            - name: SERVICE_NAME
+              value: eureka
+            - name: SPRINT_BOOT_ENV
+              value: prod
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SPRING_CONFIG_LOCATION
+              value: /app/conf/application-robot.yml
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: 'skywalking-oap.skywalking:11800'
+            - name: aliyun_logs_eureka
+              value: stdout
+            - name: logtail
+              value: eureka
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+          resources:
+            limits:
+              cpu: 1024m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 1200Mi
+          volumeMounts:
+            - name: eureka-cm
+              mountPath: /app/conf
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 180
+            timeoutSeconds: 1
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 30
+  podManagementPolicy: "Parallel"  #并行部署

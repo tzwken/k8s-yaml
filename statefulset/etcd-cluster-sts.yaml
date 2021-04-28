@@ -38,6 +38,7 @@ metadata:
   namespace: third-party
 spec:
   replicas: 3
+  podManagementPolicy: "Parallel" #并行部署
   selector:
     matchLabels:
       etcd: etcd-cluster
