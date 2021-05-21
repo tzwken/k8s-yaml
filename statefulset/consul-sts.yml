@@ -29,10 +29,20 @@ spec:
     spec:
       affinity:
         nodeAffinity:
-          # 优先先择节点亲各标签，如果没有符合的可以在其它节点运行
+          # 优先先择节点亲和标签，如果没有符合的可以在其它节点运行
           preferredDuringSchedulingIgnoredDuringExecution:
           - weight: 1
             preference:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - "consul"
+            topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          # 节点反亲和
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
               matchExpressions:
               - key: app
                 operator: In
