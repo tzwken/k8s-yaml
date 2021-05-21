@@ -1,4 +1,4 @@
-apiVersion: policy/v1beta1
+    apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: "consul-pdb"
@@ -18,7 +18,6 @@ metadata:
   namespace: third-party
 spec:
   serviceName: consul
-  podManagementPolicy: "Parallel" #并行部署
   replicas: 3
   selector:
     matchLabels:
@@ -29,9 +28,11 @@ spec:
         app: consul
     spec:
       affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
+        nodeAffinity:
+          # 优先先择节点亲各标签，如果没有符合的可以在其它节点运行
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
               matchExpressions:
               - key: app
                 operator: In
