@@ -2,7 +2,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: eureka-cm
-  namespace: qdpaas-prod
+  namespace: third-party
 data:
   application-robot.yml: |-
     server:
@@ -45,7 +45,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: eureka
-  namespace: qdpaas-prod
+  namespace: third-party
 spec:
   clusterIP: None
   ports:
@@ -58,7 +58,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: eureka
-  namespace: qdpaas-prod
+  namespace: third-party
 spec:
   serviceName: eureka
   replicas: 3
@@ -126,7 +126,7 @@ spec:
                   fieldPath: status.hostIP
           resources:
             limits:
-              cpu: 1024m
+              cpu: 2048m
               memory: 2Gi
             requests:
               cpu: 500m

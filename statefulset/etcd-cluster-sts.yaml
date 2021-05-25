@@ -42,6 +42,7 @@ spec:
   selector:
     matchLabels:
       etcd: etcd-cluster
+  podManagementPolicy: "Parallel"  #并行部署
   serviceName: etcd-cluster
   template:
     metadata:
@@ -117,6 +118,13 @@ spec:
         env:
         - name: CLUSTER_SIZE
           value: "3"
+        resources:
+            limits:
+              cpu: '2'
+              memory: 600Mi
+            requests:
+              cpu: 300m
+              memory: 300Mi
         image: tzwken/etcd:v2
         imagePullPolicy: IfNotPresent
         name: etcd-node
