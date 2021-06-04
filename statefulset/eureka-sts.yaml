@@ -92,10 +92,6 @@ spec:
               value: 128M
             - name: SERVICE_NAME
               value: eureka
-            - name: SPRINT_BOOT_ENV
-              value: prod
-            - name: SPRING_PROFILES_ACTIVE
-              value: prod
             - name: SPRING_CONFIG_LOCATION
               value: /app/conf/application.yml
             - name: POD_NAME
