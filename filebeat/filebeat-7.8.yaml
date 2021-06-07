@@ -1,19 +1,20 @@
 ---
-apiVersion: v1
 kind: ConfigMap
+apiVersion: v1
 metadata:
   name: filebeat-config
   namespace: kube-system
   labels:
     k8s-app: filebeat
 data:
-  filebeat.yml: |-
+  filebeat.yml: >-
     filebeat.inputs:
+
     - type: container
       paths:
         - /var/log/containers/*.log
       exclude_lines: ['^$']
-      multiline.pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}"
+      multiline.pattern: ([0-9]{4}-[0-9]{2}-[0-9]{2})|([0-9]{0,3}\\.[0-9]{0,3}\\.[0-9]{0,3}\\.[0-9]{0,3})
       multiline.negate: true
       multiline.match: after
       multiline.max_lines: 200
@@ -25,58 +26,82 @@ data:
             - logs_path:
                 logs_path: "/var/log/containers/"
 
-    # To enable hints based autodiscover, remove `filebeat.inputs` configuration and uncomment this:
+    # To enable hints based autodiscover, remove `filebeat.inputs` configuration
+    and uncomment this:
+
     #filebeat.autodiscover:
+
     #  providers:
+
     #    - type: kubernetes
+
     #      node: ${NODE_NAME}
+
     #      hints.enabled: true
+
     #      hints.default_config:
+
     #        type: container
+
     #        paths:
+
     #          - /var/log/containers/*${data.kubernetes.container.id}.log
+
 
     processors:
       - add_cloud_metadata:
       - add_host_metadata:
       - drop_fields:
-          fields: ["host.ip","host.mac","host.name","agent.name","agent.hostname","agent.ephemeral_id","agent.type"]
+          fields: ["host.ip","host.mac","host.name","agent.name","agent.hostname","agent.ephemeral_id","agent.type","log.file.path"]
 
     cloud.id: ${ELASTIC_CLOUD_ID}
+
     cloud.auth: ${ELASTIC_CLOUD_AUTH}
 
-    setup.template.enabled: true
-    setup.template.name: "k8s"
-    setup.template.pattern: "k8s-*"
-    setup.template.fields: "${path.config}/fields.yml"
-    setup.template.settings:
-      index.number_of_shards: 1
-      index.number_of_replicas: 0
+
+    setup.template.enabled: false
+
+    #setup.template.name: "k8s"
+
+    #setup.template.pattern: "k8s-*"
+
+    #setup.template.fields: "${path.config}/fields.yml"
+
+    #setup.template.settings:
+
+    #  index.number_of_shards: 3
+
+    #  index.number_of_replicas: 1
+
     setup.ilm.enabled: false
-    #setup.ilm.check_exists: true
-    #setup.ilm.rollover_alias: 'k8s'
-    
+
 
     output.elasticsearch:
-      hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
+      hosts: ['10.31.1.154:9200']
+      pipelines:
+        - pipeline: "nginx-ingress-controller-pipeline"
+          when.equals:
+            kubernetes.container.name: "nginx-ingress-controller"
+        - pipeline: "timestamp-pipeline"
       indices:
-        - index: "k8s-%{[kubernetes.container.name]}-%{+yyyy.MM}"
-          when:
-            has_fields: ['kubernetes.container.name']
-        - index: "k8s-not-container-%{+yyyy.MM}"
-          when:
-            not:
-              has_fields: ['kubernetes.container.name']
-      username: ${ELASTICSEARCH_USERNAME}
-      password: ${ELASTICSEARCH_PASSWORD}
+        - index: "k8s-nginx-ingress-controller"
+          when.equals:
+            kubernetes.container.name: "nginx-ingress-controller"
+        - index: "k8s-default-log-%{+yyyy.MM.dd}"
+      username: elastic
+      password: encRIEt3KtfxlUD0UFrX
       #bulk_max_size: 0
       #backoff.init: 5s
       #worker: 5
 
     logging.level: error
+
     logging.to_files: false
+
     #logging.json: true
+
     #logging.ecs: true
+
 
 ---
 apiVersion: apps/v1
