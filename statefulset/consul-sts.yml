@@ -75,11 +75,14 @@ spec:
       affinity:
         nodeAffinity:
           # 优先先择节点亲和标签，如果没有符合的可以在其它节点运行
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: app
+          #preferredDuringSchedulingIgnoredDuringExecution:
+          #- weight: 1
+          #  preference:
+          # 强制选择带标签的节点，一直重试
+          requiredDuringSchedulingIgnoredDuringExecution:
+           nodeSelectorTerms:
+            - matchExpressions:
+              - key: tzwken/consul
                 operator: In
                 values:
                 - "consul"

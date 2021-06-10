@@ -53,11 +53,10 @@ spec:
     spec:
       affinity:
        nodeAffinity:
-         preferredDuringSchedulingIgnoredDuringExecution:
-         - weight: 1
-           preference:
-             matchExpressions:
-             - key: third-party/app
+         requiredDuringSchedulingIgnoredDuringExecution:
+           nodeSelectorTerms:
+           - matchExpressions:
+             - key: tzwken/etcd
                operator: In
                values:
                - 'etcd'
@@ -65,7 +64,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchExpressions:
-              - key: etcd
+              - key: tzwken/etcd
                 operator: In
                 values:
                 - "etcd-cluster"
