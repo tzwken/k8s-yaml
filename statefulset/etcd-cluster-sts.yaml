@@ -42,7 +42,6 @@ spec:
   selector:
     matchLabels:
       etcd: etcd-cluster
-  podManagementPolicy: "Parallel"  #并行部署
   serviceName: etcd-cluster
   template:
     metadata:
