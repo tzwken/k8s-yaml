@@ -16,13 +16,14 @@ data:
             timeout server-fin 5s
             timeout client 30s
             timeout server 30s
-            timeout tunnel 5m
+            timeout tunnel 10m
     listen mysql
             bind 0.0.0.0:3306
             mode tcp
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance source
             server mysql-1 192.168.19.50:3306 check inter 10s fall 2 rise 2
             server mysql-2 192.168.19.31:3306 check inter 10s fall 2 rise 2
@@ -33,6 +34,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server mq-1 192.168.20.5:5672 check inter 10s fall 2 rise 2 weight 1
             server mq-2 192.168.20.27:5672 check inter 10s fall 2 rise 2 weight 1
@@ -43,6 +45,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance leastconn
             server mongodb-1 192.168.20.5:17017 check inter 10s fall 2 rise 2 weight 1
             server mongodb-2 192.168.20.27:17017 check inter 10s fall 2 rise 2 weight 1
@@ -53,6 +56,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server elast-1 192.168.20.3:9200 check inter 10s fall 2 rise 2 weight 1
             server elast-2 192.168.20.37:9200 check inter 10s fall 2 rise 2 weight 1
@@ -63,6 +67,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server elast-1 192.168.20.3:9300 check inter 10s fall 2 rise 2 weight 1
             server elast-2 192.168.20.37:9300 check inter 10s fall 2 rise 2 weight 1
@@ -73,6 +78,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server redis-1 192.168.20.3:26379 check inter 10s fall 2 rise 2 weight 1
             server redis-2 192.168.20.37:26379 check inter 10s fall 2 rise 2 weight 1
@@ -83,9 +89,8 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
-            timeout server  150m
-            timeout client  150m
             option tcp-check
             tcp-check send AUTH\ wintel\r\n
             tcp-check send info\ replication\r\n
@@ -99,6 +104,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server fastdfs-1 192.168.20.3:22122 check inter 10s fall 2 rise 2 weight 1
             server fastdfs-2 192.168.20.37:22122 check inter 10s fall 2 rise 2 weight 1
@@ -108,6 +114,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server nginx-fdfs-1 192.168.20.5:80 check inter 10s fall 2 rise 2 weight 1
             server nginx-fdfs-2 192.168.20.27:80 check inter 10s fall 2 rise 2 weight 1
@@ -118,6 +125,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server grpc 192.168.19.12:5015 check inter 10s fall 2 rise 2 weight 1
     listen socket-5016
@@ -126,6 +134,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server grpc 192.168.19.12:5016 check inter 10s fall 2 rise 2 weight 1
     listen grpc
@@ -134,6 +143,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server grpc 192.168.19.12:5017 check inter 10s fall 2 rise 2 weight 1
     listen record
@@ -142,6 +152,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server record1 192.168.19.12:88 check inter 10s fall 2 rise 2 weight 1
             server record2 192.168.19.57:88 check inter 10s fall 2 rise 2 weight 1
@@ -151,6 +162,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server record2 192.168.19.12:5033 check inter 10s fall 2 rise 2 weight 1
     listen wxbot
@@ -159,6 +171,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server wxbot 10.71.248.86:2888 check inter 10s fall 2 rise 2 weight 1
     listen oneid
@@ -167,6 +180,7 @@ data:
             option tcplog
             option dontlognull
             option dontlog-normal
+            option tcpka
             balance roundrobin
             server wxbot 10.71.248.86:2887 check inter 10s fall 2 rise 2 weight 1
 kind: ConfigMap
