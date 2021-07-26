@@ -26,11 +26,8 @@ spec:
   volumes:
   - hostPath:
       path: /data/k8s/prometheus
-      type: DirectoryOrCreate
     name: prometheus-k8s-db-local
   baseImage: quay.io/prometheus/prometheus
-  externalLabels:
-    prometheus: monitoring/k8s-master
   containers:
   - name: prometheus
     volumeMounts:
@@ -46,8 +43,9 @@ spec:
   resources:
     requests:
       memory: 400Mi
-  externalUrl: http://prometheus.szairport.com
-  retention: 30d
+  externalUrl: http://prome.xxx.com
+  routePrefix: '/prome/'
+  retention: 7d
   ruleSelector:
     matchLabels:
       prometheus: k8s

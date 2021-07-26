@@ -17,6 +17,9 @@ spec:
     spec:
       containers:
       - image: grafana/grafana:6.4.3
+        args:
+          - 'cfg:default.server.root_url=/grafana'
+          - 'cfg:default.server.serve_from_sub_path=true'
         name: grafana
         ports:
         - containerPort: 3000
