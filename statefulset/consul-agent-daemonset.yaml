@@ -1,0 +1,74 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+ name: consul
+ namespace: kube-system
+ labels:
+   app: consul
+spec:
+ minReadySeconds: 60
+ selector:
+   matchLabels:
+     app: consul
+ template:
+   metadata:
+     labels:
+       app: consul
+   spec:
+     hostNetwork: true
+     dnsPolicy: ClusterFirstWithHostNet
+     terminationGracePeriodSeconds: 120
+     tolerations:
+       - operator: "Exists"
+     containers:
+     - name: consul
+       image: registry.cn-beijing.aliyuncs.com/onpremise/consul:1.8.3
+       imagePullPolicy: IfNotPresent
+       command:
+         - /bin/consul
+       args:
+         - "agent"
+         - "-data-dir=/consul/data"
+         - "-bind=0.0.0.0"
+         - "-client=0.0.0.0"
+         - "-datacenter=dc1"
+         - "-advertise=$(HOST_IP)"
+         - "-join=consul-0.consul.third-party.svc.cluster.local"
+         - "-join=consul-1.consul.third-party.svc.cluster.local"
+         - "-join=consul-2.consul.third-party.svc.cluster.local"
+         - "-join=consul-3.consul.third-party.svc.cluster.local"
+         - "-join=consul-4.consul.third-party.svc.cluster.local"
+       volumeMounts:
+         - name: data
+           mountPath: /consul/data
+       env:
+         - name: HOSTIP
+           valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+         - name: POD_NAME
+           valueFrom:
+             fieldRef:
+               apiVersion: v1
+               fieldPath: metadata.name
+         - name: POD_NAMESPACE
+           valueFrom:
+             fieldRef:
+               apiVersion: v1
+               fieldPath: metadata.namespace
+         - name: POD_IP
+           valueFrom:
+             fieldRef:
+               apiVersion: v1
+               fieldPath: status.podIP
+         - name: HOST_IP
+           valueFrom:
+             fieldRef:
+               apiVersion: v1
+               fieldPath: status.hostIP
+     volumes:
+       - name: data
+         hostPath:
+           path: /data/data/k8s/consul-daemonset
+           type: DirectoryOrCreate

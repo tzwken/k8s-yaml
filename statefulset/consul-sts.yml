@@ -63,7 +63,7 @@ metadata:
 spec:
   podManagementPolicy: "OrderedReady"  #逐一创建
   serviceName: consul
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
       app: consul
@@ -72,6 +72,11 @@ spec:
       labels:
         app: consul
     spec:
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/data/consul-data
+            type: DirectoryOrCreate
       affinity:
         nodeAffinity:
           # 优先先择节点亲和标签，如果没有符合的可以在其它节点运行
@@ -97,6 +102,8 @@ spec:
                 - "consul"
             topologyKey: kubernetes.io/hostname
       terminationGracePeriodSeconds: 180
+      tolerations:
+        - operator: "Exists"
       containers:
       - name: consul
         image: consul:1.8.3
@@ -114,6 +121,8 @@ spec:
              - "-retry-join=consul-0.consul.$(NAMESPACE).svc.cluster.local"
              - "-retry-join=consul-1.consul.$(NAMESPACE).svc.cluster.local"
              - "-retry-join=consul-2.consul.$(NAMESPACE).svc.cluster.local"
+             - "-retry-join=consul-3.consul.$(NAMESPACE).svc.cluster.local"
+             - "-retry-join=consul-4.consul.$(NAMESPACE).svc.cluster.local"
              - "-domain=cluster.local"
              - "-disable-host-node-id"
         env:
@@ -132,6 +141,9 @@ spec:
             requests:
               cpu: 500m
               memory: 500Mi
+        volumeMounts:
+            - name: data
+              mountPath: /consul/data
         ports:
             - containerPort: 8500
               name: ui-port
