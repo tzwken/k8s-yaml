@@ -144,6 +144,13 @@ spec:
         volumeMounts:
             - name: data
               mountPath: /consul/data
+        lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - '-c'
+                  - sleep 30s
         ports:
             - containerPort: 8500
               name: ui-port
