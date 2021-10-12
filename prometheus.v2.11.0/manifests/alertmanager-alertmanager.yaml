@@ -7,6 +7,8 @@ metadata:
   namespace: monitoring
 spec:
   baseImage: quay.io/prometheus/alertmanager
+  externalUrl: 'https://k8s.xxx.com/alert/'
+  routePrefix: /alert/
   nodeSelector:
     kubernetes.io/os: linux
   replicas: 3

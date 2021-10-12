@@ -22,6 +22,7 @@ spec:
     alertmanagers:
     - name: alertmanager-main
       namespace: monitoring
+      pathPrefix: /alert/
       port: web
   volumes:
   - hostPath:
@@ -43,7 +44,7 @@ spec:
   resources:
     requests:
       memory: 400Mi
-  externalUrl: http://prome.xxx.com
+  externalUrl: http://k8s.xxx.com/prome/
   routePrefix: '/prome/'
   retention: 7d
   ruleSelector:
