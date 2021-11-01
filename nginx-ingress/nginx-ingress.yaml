@@ -176,6 +176,22 @@ spec:
         prometheus.io/scrape: "true"
     spec:
       serviceAccountName: nginx-ingress-serviceaccount
+      initContainers:
+        - name: init-sysctl
+          image: 'tzwken/nginx:1.16.1-alpine-cst'
+          command:
+            - /bin/sh
+            - '-c'
+            - |
+              sysctl -w net.core.somaxconn=65535
+              sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+              sysctl -w fs.file-max=1048576
+              sysctl -w fs.inotify.max_user_instances=16384
+              sysctl -w fs.inotify.max_user_watches=524288
+              sysctl -w fs.inotify.max_queued_events=16384
+          securityContext:
+            privileged: true
+            procMount: Default
       containers:
         - name: nginx-ingress-controller
           #image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.21.0
