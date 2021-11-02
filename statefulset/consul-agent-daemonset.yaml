@@ -21,6 +21,18 @@ spec:
      terminationGracePeriodSeconds: 120
      tolerations:
        - operator: "Exists"
+     initContainers:
+        - name: init-sysctl
+          image: 'tzwken/nginx:1.16.1-alpine-cst'
+          command:
+            - /bin/sh
+            - '-c'
+            - |
+              ip addr flush dev lo label lo:consul
+              ip addr add 169.254.254.169/32 dev lo label lo:consul
+          securityContext:
+            privileged: true
+            procMount: Default
      containers:
      - name: consul
        image: registry.cn-beijing.aliyuncs.com/onpremise/consul:1.8.3
@@ -30,8 +42,8 @@ spec:
        args:
          - "agent"
          - "-data-dir=/consul/data"
-         - "-bind=0.0.0.0"
-         - "-client=0.0.0.0"
+         - "-bind=$(HOST_IP)"
+         - "-client=169.254.254.169"
          - "-datacenter=dc1"
          - "-advertise=$(HOST_IP)"
          - "-join=consul-0.consul.third-party.svc.cluster.local"
