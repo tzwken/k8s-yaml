@@ -2,6 +2,7 @@ apiVersion: v1
 data:
   haproxy.cfg: |-
     global
+            maxconn     10000
             user root
             group root
             daemon
@@ -14,9 +15,9 @@ data:
             timeout check 10s
             timeout client-fin 5s
             timeout server-fin 5s
-            timeout client 30s
-            timeout server 30s
-            timeout tunnel 10m
+            timeout client 0
+            timeout server 0
+            #timeout tunnel 30m
     listen mysql
             bind 0.0.0.0:3306
             mode tcp
