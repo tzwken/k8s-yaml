@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -11,6 +10,10 @@ spec:
  selector:
    matchLabels:
      app: consul
+ updateStrategy:
+   type: RollingUpdate
+   rollingUpdate:
+     maxUnavailable: 50%
  template:
    metadata:
      labels:
@@ -21,18 +24,6 @@ spec:
      terminationGracePeriodSeconds: 120
      tolerations:
        - operator: "Exists"
-     initContainers:
-        - name: init-sysctl
-          image: 'tzwken/nginx:1.16.1-alpine-cst'
-          command:
-            - /bin/sh
-            - '-c'
-            - |
-              ip addr flush dev lo label lo:consul
-              ip addr add 169.254.254.169/32 dev lo label lo:consul
-          securityContext:
-            privileged: true
-            procMount: Default
      containers:
      - name: consul
        image: registry.cn-beijing.aliyuncs.com/onpremise/consul:1.8.3
@@ -54,6 +45,26 @@ spec:
        volumeMounts:
          - name: data
            mountPath: /consul/data
+       lifecycle:
+         postStart:
+           exec:
+             command:
+               - /bin/sh
+               - '-c'
+               - |
+                 ip addr flush dev lo label lo:consul
+                 ip addr add 169.254.254.169/32 dev lo label lo:consul
+         preStop:
+           exec:
+             command:
+               - /bin/sh
+               - '-c'
+               - |
+                 ip addr flush dev lo label lo:consul
+                 sleep 3s
+       securityContext:
+          privileged: true
+          procMount: Default
        env:
          - name: HOSTIP
            valueFrom:
