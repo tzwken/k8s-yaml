@@ -63,7 +63,7 @@ metadata:
 spec:
   podManagementPolicy: "OrderedReady"  #逐一创建
   serviceName: consul
-  replicas: 5
+  replicas: 3
   selector:
     matchLabels:
       app: consul
@@ -71,6 +71,7 @@ spec:
     metadata:
       labels:
         app: consul
+        third-party: consul
     spec:
       volumes:
         - name: data
@@ -96,7 +97,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchExpressions:
-              - key: app
+              - key: third-party
                 operator: In
                 values:
                 - "consul"
@@ -112,7 +113,7 @@ spec:
         args:
              - "agent"
              - "-server"
-             - "-bootstrap-expect=3"
+             - "-bootstrap-expect=2"
              - "-ui"
              - "-data-dir=/consul/data"
              - "-bind=0.0.0.0"
@@ -121,8 +122,6 @@ spec:
              - "-retry-join=consul-0.consul.$(NAMESPACE).svc.cluster.local"
              - "-retry-join=consul-1.consul.$(NAMESPACE).svc.cluster.local"
              - "-retry-join=consul-2.consul.$(NAMESPACE).svc.cluster.local"
-             - "-retry-join=consul-3.consul.$(NAMESPACE).svc.cluster.local"
-             - "-retry-join=consul-4.consul.$(NAMESPACE).svc.cluster.local"
              - "-domain=cluster.local"
              - "-disable-host-node-id"
         env:
@@ -137,10 +136,10 @@ spec:
         resources:
             limits:
               cpu: '2'
-              memory: 1000Mi
-            requests:
-              cpu: 500m
               memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 50Mi
         volumeMounts:
             - name: data
               mountPath: /consul/data
@@ -150,7 +149,7 @@ spec:
                 command:
                   - /bin/sh
                   - '-c'
-                  - sleep 30s
+                  - sleep 5s
         ports:
             - containerPort: 8500
               name: ui-port

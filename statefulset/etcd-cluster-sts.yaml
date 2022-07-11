@@ -26,7 +26,6 @@ spec:
   selector:
     matchLabels:
       etcd: etcd-cluster
-
 ---
 
 apiVersion: apps/v1
@@ -42,12 +41,14 @@ spec:
   selector:
     matchLabels:
       etcd: etcd-cluster
+  podManagementPolicy: "Parallel"  #并行部署
   serviceName: etcd-cluster
   template:
     metadata:
       creationTimestamp: null
       labels:
         etcd: etcd-cluster
+        third-party: etcd-cluster
       name: etcd-node
     spec:
       affinity:
@@ -63,7 +64,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchExpressions:
-              - key: tzwken/etcd
+              - key: third-party
                 operator: In
                 values:
                 - "etcd-cluster"
@@ -119,10 +120,10 @@ spec:
         resources:
             limits:
               cpu: '2'
-              memory: 600Mi
+              memory: 500Mi
             requests:
-              cpu: 300m
-              memory: 300Mi
+              cpu: 100m
+              memory: 200Mi
         image: tzwken/etcd:v2
         imagePullPolicy: IfNotPresent
         name: etcd-node
