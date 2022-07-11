@@ -24,6 +24,18 @@ spec:
      terminationGracePeriodSeconds: 120
      tolerations:
        - operator: "Exists"
+     initContainers:
+        - name: configure-systemc-ip
+          image: 'registry.cn-beijing.aliyuncs.com/onpremise/consul:1.8.3'
+          command:
+            - /bin/sh
+            - '-c'
+            - |
+              ip addr flush dev lo label lo:consul
+              ip addr add 169.254.254.169/32 dev lo label lo:consul
+          securityContext:
+            privileged: true
+            runAsUser: 0
      containers:
      - name: consul
        image: registry.cn-beijing.aliyuncs.com/onpremise/consul:1.8.3
@@ -46,14 +58,6 @@ spec:
          - name: data
            mountPath: /consul/data
        lifecycle:
-         postStart:
-           exec:
-             command:
-               - /bin/sh
-               - '-c'
-               - |
-                 ip addr flush dev lo label lo:consul
-                 ip addr add 169.254.254.169/32 dev lo label lo:consul
          preStop:
            exec:
              command:
