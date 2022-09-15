@@ -1,4 +1,8 @@
+kind: ConfigMap
 apiVersion: v1
+metadata:
+  name: grafana-dashboard-node-exporter
+  namespace: monitoring
 data:
   node-exporter.json: |-
     {
@@ -269,7 +273,7 @@ data:
                 "41943040"
               ],
               "type": "number",
-              "unit": "binBps"
+              "unit": "bytes"
             },
             {
               "$$hashKey": "object:176",
@@ -290,7 +294,7 @@ data:
                 "41943040"
               ],
               "type": "number",
-              "unit": "binBps"
+              "unit": "bytes"
             },
             {
               "$$hashKey": "object:177",
@@ -311,7 +315,7 @@ data:
                 "419430400"
               ],
               "type": "number",
-              "unit": "binBps"
+              "unit": "bits"
             },
             {
               "$$hashKey": "object:178",
@@ -332,7 +336,7 @@ data:
                 "419430400"
               ],
               "type": "number",
-              "unit": "binBps"
+              "unit": "bits"
             },
             {
               "$$hashKey": "object:179",
@@ -3876,7 +3880,3 @@ data:
       "uid": "9CWBz0bik",
       "version": 3
     }
-kind: ConfigMap
-metadata:
-  name: grafana-dashboard-node-exporter
-  namespace: monitoring
