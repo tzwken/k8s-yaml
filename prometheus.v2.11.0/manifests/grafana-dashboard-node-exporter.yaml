@@ -273,7 +273,7 @@ data:
                 "41943040"
               ],
               "type": "number",
-              "unit": "bytes"
+              "unit": "binBps"
             },
             {
               "$$hashKey": "object:176",
@@ -294,7 +294,7 @@ data:
                 "41943040"
               ],
               "type": "number",
-              "unit": "bytes"
+              "unit": "binBps"
             },
             {
               "$$hashKey": "object:177",
@@ -315,7 +315,7 @@ data:
                 "419430400"
               ],
               "type": "number",
-              "unit": "bits"
+              "unit": "binbps"
             },
             {
               "$$hashKey": "object:178",
@@ -336,7 +336,7 @@ data:
                 "419430400"
               ],
               "type": "number",
-              "unit": "bits"
+              "unit": "binbps"
             },
             {
               "$$hashKey": "object:179",
@@ -524,7 +524,7 @@ data:
               "refId": "N"
             },
             {
-              "expr": "max(rate(node_network_receive_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\"}[$interval])*8) by (instance)",
+              "expr": "sum(rate(node_network_receive_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\"}[$interval])*8) by (instance)",
               "format": "table",
               "hide": false,
               "instant": true,
@@ -533,7 +533,7 @@ data:
               "refId": "J"
             },
             {
-              "expr": "max(rate(node_network_transmit_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\"}[$interval])*8) by (instance)",
+              "expr": "sum(rate(node_network_transmit_bytes_total{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\"}[$interval])*8) by (instance)",
               "format": "table",
               "hide": false,
               "instant": true,
