@@ -27,117 +27,145 @@ spec:
     matchLabels:
       etcd: etcd-cluster
 ---
-
-apiVersion: apps/v1
 kind: StatefulSet
+apiVersion: apps/v1
 metadata:
-  labels:
-    etcd: etcd-cluster
   name: etcd-node
   namespace: third-party
+  labels:
+    etcd: etcd-cluster
 spec:
   replicas: 3
-  podManagementPolicy: "Parallel" #并行部署
   selector:
     matchLabels:
       etcd: etcd-cluster
-  podManagementPolicy: "Parallel"  #并行部署
-  serviceName: etcd-cluster
   template:
     metadata:
+      name: etcd-node
       creationTimestamp: null
       labels:
         etcd: etcd-cluster
         third-party: etcd-cluster
-      name: etcd-node
     spec:
-      affinity:
-       nodeAffinity:
-         requiredDuringSchedulingIgnoredDuringExecution:
-           nodeSelectorTerms:
-           - matchExpressions:
-             - key: tzwken/etcd
-               operator: In
-               values:
-               - 'etcd'
-       podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: third-party
-                operator: In
-                values:
-                - "etcd-cluster"
-            topologyKey: kubernetes.io/hostname
-      tolerations:
-      - operator: "Exists"
-        effect: "NoSchedule"
+      volumes:
+        - name: etcddata
+          persistentVolumeClaim:
+            claimName: etcddata
+        #- hostPath:
+        #    path: /data/k8s/etcd
+        #    type: DirectoryOrCreate
+        #  name: etcddata
       containers:
-      - command:
-        - "/bin/sh"
-        - "-ecx"
-        - |
-          IP=$(hostname -i)
-          for i in $(seq 0 $((${CLUSTER_SIZE} - 1))); do
-            while true; do
-              echo "Waiting for etcd-node-${i}.etcd-cluster to come up"
-              ping -W 1 -c 1 etcd-node-${i}.etcd-cluster > /dev/null && break
-              sleep 1s
-            done
-          done
-          PEERS=""
-          for i in $(seq 0 $((${CLUSTER_SIZE} - 1))); do
-              PEERS="${PEERS}${PEERS:+,}etcd-node-${i}=http://etcd-node-${i}.etcd-cluster:12380"
-          done
-          export ETCD_INITIAL_CLUSTER="${PEERS}"
-          export ETCD_NAME="${HOSTNAME}"
-          export ETCD_DATA_DIR="/etcddata/${HOSTNAME}"
-          export ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluste"
-          export ETCD_LISTEN_PEER_URLS="http://${IP}:12380"
-          export ETCD_LISTEN_CLIENT_URLS="http://${IP}:12379,http://127.0.0.1:12379"
-          export ETCD_ADVERTISE_CLIENT_URLS="http://${HOSTNAME}.etcd-cluster:12379"
-          export ETCD_INITIAL_ADVERTISE_PEER_URLS="http://${HOSTNAME}.etcd-cluster:12380"
-          if [ -f "/etcddata/lock" ];then
-            export ETCD_INITIAL_CLUSTER_STATE="existing"
-          else
-            export ETCD_INITIAL_CLUSTER_STATE="new"
-            echo "lock" >/etcddata/lock
-          fi
-          exec /usr/bin/etcd #\
-            #--name ${HOSTNAME} \
-            #--data-dir /etcddata/${HOSTNAME} \
-            #--initial-cluster-token etcd-cluster \
-            #--listen-peer-urls http://${IP}:12380 \
-            #--listen-client-urls http://${IP}:12379,http://127.0.0.1:12379 \
-            #--advertise-client-urls http://${HOSTNAME}.etcd-cluster:12379 \
-            #--initial-advertise-peer-urls http://${HOSTNAME}.etcd-cluster:12380 \
-            #--initial-cluster ${PEERS}
-            #--initial-cluster-state new
-            #--initial-cluster-state existing
-        env:
-        - name: CLUSTER_SIZE
-          value: "3"
-        resources:
+        - name: etcd-node
+          image: 'tzwken/etcd:v2'
+          command:
+            - /bin/sh
+            - '-cx'
+            - >
+              IP=$(hostname -i)
+
+              PEERS=""
+
+              ENDPOINTS=""
+
+              for i in $(seq 0 $((${CLUSTER_SIZE} - 1))); do
+                  PEERS="${PEERS}${PEERS:+,}etcd-node-${i}=http://etcd-node-${i}.etcd-cluster.${NAMESPACE}.svc.cluster.local.:12380"
+                  ENDPOINTS="${ENDPOINTS}${ENDPOINTS:+,}http://etcd-node-${i}.etcd-cluster.${NAMESPACE}.svc.cluster.local.:12379"
+              done
+
+              export INITIAL_CLUSTER="${PEERS}"
+
+              export NAME="${HOSTNAME}"
+
+              export DATA_DIR="/etcddata/${HOSTNAME}"
+
+              export INITIAL_CLUSTER_TOKEN="etcd-cluste"
+
+              export LISTEN_PEER_URLS="http://${IP}:12380"
+
+              export
+              LISTEN_CLIENT_URLS="http://${IP}:12379,http://127.0.0.1:2379"
+
+              export
+              ADVERTISE_CLIENT_URLS="http://${HOSTNAME}.etcd-cluster.${NAMESPACE}.svc.cluster.local.:12379"
+
+              export
+              INITIAL_ADVERTISE_PEER_URLS="http://${HOSTNAME}.etcd-cluster.${NAMESPACE}.svc.cluster.local.:12380"
+
+              if [ -f "${DATA_DIR}/lock" ];then
+                export INITIAL_CLUSTER_STATE="existing"
+              else
+                mkdir -p ${DATA_DIR}
+                echo "lock" >${DATA_DIR}/lock
+                etcdctl --endpoints=${ENDPOINTS} member list | grep ${NAME}
+                if [ $? -eq 0 ];then
+                  myeid=`etcdctl --endpoints=${ENDPOINTS} member list | grep ${NAME} | awk -F ',' '{print $1}'`
+                  etcdctl --endpoints=${ENDPOINTS} member remove ${myeid}
+                  etcdctl --endpoints=${ENDPOINTS} member add ${NAME} --peer-urls="${INITIAL_ADVERTISE_PEER_URLS}"|grep ETCD
+                else
+                  export INITIAL_CLUSTER_STATE="new"
+                fi
+              fi
+
+              exec /usr/bin/etcd \
+                --name ${HOSTNAME} \
+                --data-dir ${DATA_DIR} \
+                --initial-cluster-token ${INITIAL_CLUSTER_TOKEN} \
+                --listen-peer-urls ${LISTEN_PEER_URLS} \
+                --listen-client-urls ${LISTEN_CLIENT_URLS} \
+                --advertise-client-urls ${ADVERTISE_CLIENT_URLS} \
+                --initial-advertise-peer-urls ${INITIAL_ADVERTISE_PEER_URLS} \
+                --initial-cluster ${INITIAL_CLUSTER} \
+                --initial-cluster-state ${INITIAL_CLUSTER_STATE}
+          env:
+            - name: CLUSTER_SIZE
+              value: '3'
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+          resources:
             limits:
               cpu: '2'
               memory: 500Mi
             requests:
               cpu: 100m
               memory: 200Mi
-        image: tzwken/etcd:v2
-        imagePullPolicy: IfNotPresent
-        name: etcd-node
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - name: etcddata
-          mountPath: /etcddata
-      volumes:
-      - hostPath:
-          path: /data/k8s/etcd
-          type: DirectoryOrCreate
-        name: etcddata
-      dnsPolicy: ClusterFirst
-      #imagePullSecrets:
-      #- name: default-reg
+          volumeMounts:
+            - name: etcddata
+              mountPath: /etcddata
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
       restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: tzwken/etcd
+                    operator: In
+                    values:
+                      - etcd
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: third-party
+                    operator: In
+                    values:
+                      - etcd-cluster
+              topologyKey: kubernetes.io/hostname
+      schedulerName: default-scheduler
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+  serviceName: etcd-cluster
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: OnDelete
+  revisionHistoryLimit: 10

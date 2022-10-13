@@ -84,10 +84,10 @@ data:
             kubernetes.container.name: "nginx-ingress-controller"
         - pipeline: "timestamp-pipeline"
       indices:
-        - index: "k8s-nginx-ingress-controller"
+        - index: "ingress-k8s-default-log"
           when.equals:
             kubernetes.container.name: "nginx-ingress-controller"
-        - index: "k8s-default-log-%{+yyyy.MM.dd}"
+        - index: "k8s-default-log"
       username: elastic
       password: encRIEt3KtfxlUD0UFrX
       #bulk_max_size: 0
@@ -126,24 +126,12 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: filebeat
-        image: elastic/filebeat:7.8.0
+        image: registry.cn-beijing.aliyuncs.com/onpremise/filebeat:7.17.2
         args: [
           "-c", "/etc/filebeat.yml",
           "-e",
         ]
         env:
-        - name: ELASTICSEARCH_HOST
-          value: 192.168.221.7
-        - name: ELASTICSEARCH_PORT
-          value: "9200"
-        - name: ELASTICSEARCH_USERNAME
-          value: elastic
-        - name: ELASTICSEARCH_PASSWORD
-          value: 677ouuXYAw7D7ZgdI2xc
-        - name: ELASTIC_CLOUD_ID
-          value:
-        - name: ELASTIC_CLOUD_AUTH
-          value:
         - name: NODE_NAME
           valueFrom:
             fieldRef:
@@ -201,21 +189,30 @@ roleRef:
   name: filebeat
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: filebeat
   labels:
     k8s-app: filebeat
 rules:
-- apiGroups: [""] # "" indicates the core API group
-  resources:
-  - namespaces
-  - pods
-  verbs:
-  - get
-  - watch
-  - list
+  - verbs:
+      - get
+      - watch
+      - list
+    apiGroups:
+      - ''
+    resources:
+      - namespaces
+      - pods
+  - verbs:
+      - get
+      - list
+      - watch
+    apiGroups:
+      - ''
+    resources:
+      - nodes
 ---
 apiVersion: v1
 kind: ServiceAccount
