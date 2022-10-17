@@ -57,7 +57,7 @@ spec:
         #  name: etcddata
       containers:
         - name: etcd-node
-          image: 'tzwken/etcd:v2'
+          image: 'registry.cn-beijing.aliyuncs.com/onpremise/etcd:v3.4.7'
           command:
             - /bin/sh
             - '-cx'
@@ -92,18 +92,23 @@ spec:
               export
               INITIAL_ADVERTISE_PEER_URLS="http://${HOSTNAME}.etcd-cluster.${NAMESPACE}.svc.cluster.local.:12380"
 
-              if [ -f "${DATA_DIR}/lock" ];then
+              if [ -d "${DATA_DIR}/member" ];then
                 export INITIAL_CLUSTER_STATE="existing"
               else
                 mkdir -p ${DATA_DIR}
-                echo "lock" >${DATA_DIR}/lock
-                etcdctl --endpoints=${ENDPOINTS} member list | grep ${NAME}
+                etcdctl --endpoints=${ENDPOINTS} member list 2>&1| grep ${NAME}
                 if [ $? -eq 0 ];then
-                  myeid=`etcdctl --endpoints=${ENDPOINTS} member list | grep ${NAME} | awk -F ',' '{print $1}'`
+                  myeid=`etcdctl --endpoints=${ENDPOINTS} member list 2>&1| grep ${NAME} | awk -F ',' '{print $1}'`
                   etcdctl --endpoints=${ENDPOINTS} member remove ${myeid}
-                  etcdctl --endpoints=${ENDPOINTS} member add ${NAME} --peer-urls="${INITIAL_ADVERTISE_PEER_URLS}"|grep ETCD
+                  etcdctl --endpoints=${ENDPOINTS} member add ${NAME} --peer-urls="${INITIAL_ADVERTISE_PEER_URLS}"
+                  export INITIAL_CLUSTER_STATE="existing"
                 else
-                  export INITIAL_CLUSTER_STATE="new"
+                  etcdctl --endpoints=${ENDPOINTS} member add ${NAME} --peer-urls="${INITIAL_ADVERTISE_PEER_URLS}" | grep ETCD >/tmp/etcd.env
+                  if [ $? -eq 0 ];then
+                    export INITIAL_CLUSTER_STATE=`grep INITIAL_CLUSTER_STATE /tmp/etcd.env`
+                  else
+                    export INITIAL_CLUSTER_STATE="new"
+                  fi
                 fi
               fi
 
