@@ -49,7 +49,6 @@ rules:
   - pods
   - replicationcontrollers
   - replicationcontrollers/scale
-  - serviceaccounts
   - services
   - services/status
   verbs:
@@ -161,17 +160,6 @@ rules:
   resources:
   - storageclasses
   - volumeattachments
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  - clusterroles
-  - roles
-  - rolebindings
   verbs:
   - get
   - list
