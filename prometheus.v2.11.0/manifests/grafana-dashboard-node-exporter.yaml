@@ -129,7 +129,7 @@ data:
               "link": true,
               "linkTargetBlank": false,
               "linkTooltip": "浏览主机明细",
-              "linkUrl": "d/9CWBz0bik/node-exporter?orgId=1&var-job=${job}&var-hostname=All&var-node=${__cell}&var-device=All&var-origin_prometheus=$origin_prometheus",
+              "linkUrl": "d/9CWBz0bik/node-exporter?orgId=1&var-job=${job}&var-hostname=All&var-node=${__cell}&var-device=All&var-origin_prometheus=$origin_prometheus&var-DB_DATASOURCE=${DB_DATASOURCE}",
               "mappingType": 1,
               "pattern": "instance",
               "thresholds": [],
