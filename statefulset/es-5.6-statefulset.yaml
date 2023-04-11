@@ -1,0 +1,204 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: elasticsearch
+  namespace: third-party
+  labels:
+    app: elasticsearch
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 9200
+      targetPort: 9200
+    - name: transport
+      protocol: TCP
+      port: 9300
+      targetPort: 9300
+  selector:
+    app: es
+  clusterIP: None
+  type: ClusterIP
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: es
+  namespace: third-party
+  labels:
+    app: es
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: es
+  template:
+    metadata:
+      name: es
+      creationTimestamp: null
+      labels:
+        app: es
+    spec:
+      volumes:
+        - name: esdata
+          hostPath:
+            path: /data/k8s/esdata
+            type: DirectoryOrCreate
+        - name: jvm-options
+          configMap:
+            name: jvm-options
+            items:
+              - key: jvm.options
+                path: jvm.options
+            defaultMode: 420
+      initContainers:
+        - name: configure-sysctl
+          image: 'registry.cn-beijing.aliyuncs.com/onpremise/es:5.6-alpine'
+          command:
+            - sh
+            - '-c'
+            - >
+              sysctl -w vm.max_map_count=262144 ; chown 100:101 /esdata -R;
+              sysctl -w net.ipv4.ping_group_range="0 2147483647"
+          resources: {}
+          volumeMounts:
+            - name: esdata
+              mountPath: /esdata
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+            runAsUser: 0
+      containers:
+        - name: elasticsearch
+          image: 'registry.cn-beijing.aliyuncs.com/onpremise/es:5.6-alpine'
+          args:
+            - '-E'
+            - cluster.name=es-k1aktq97
+            - '-E'
+            - node.name=$(node.name)
+            - '-E'
+            - network.host=0.0.0.0
+            - '-E'
+            - path.data=/esdata
+            - '-E'
+            - discovery.zen.minimum_master_nodes=2
+            - '-E'
+            - >-
+              discovery.zen.ping.unicast.hosts=es-0.elasticsearch.third-party.svc.cluster.local.,es-1.elasticsearch.third-party.svc.cluster.local.,es-2.elasticsearch.third-party.svc.cluster.local.
+          ports:
+            - name: http
+              containerPort: 9200
+              protocol: TCP
+            - name: transport
+              containerPort: 9300
+              protocol: TCP
+          env:
+            - name: node.name
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: ES_JAVA_OPTS
+              value: '-Xms2048m -Xmx2048m'
+          resources:
+            limits:
+              cpu: '2'
+              memory: 4Gi
+            requests:
+              cpu: 100m
+              memory: 2Gi
+          volumeMounts:
+            - name: esdata
+              mountPath: /esdata
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - '-c'
+                - |
+                  #!/usr/bin/env bash -e
+                  START_FILE=/tmp/.es_start_file
+                  http () {
+                      local path="${1}"
+                      if [ -n "${ELASTIC_USERNAME}" ] && [ -n "${ELASTIC_PASSWORD}" ]; then
+                        BASIC_AUTH="-u ${ELASTIC_USERNAME}:${ELASTIC_PASSWORD}"
+                      else
+                        BASIC_AUTH=''
+                      fi
+                      curl -XGET -s -k --fail ${BASIC_AUTH} http://127.0.0.1:9200${path}
+                  }
+                  if [ -f "${START_FILE}" ]; then
+                      echo 'Elasticsearch is already running, lets check the node is healthy and there are master nodes available'
+                      http "/_cluster/health?timeout=0s"
+                      exit 0
+                  else
+                      echo 'Waiting for elasticsearch cluster to become cluster to be ready (request params: "wait_for_status=green&timeout=1s" )'
+                      if http "/_cluster/health?wait_for_status=green&timeout=1s" ; then
+                          touch ${START_FILE}
+                          exit 0
+                      else
+                          NUM=0
+                          for i in `seq 0 2`;
+                          do
+                            nc -nz es-$i.elasticsearch.third-party.svc.cluster.local  9300
+                            if [ $? -eq 0 ]; then
+                              ((NUM++))
+                            fi
+                          done
+                          if [ ${NUM} -lt 2 ]; then
+                            exit 0
+                          fi
+                          echo 'Cluster is not yet ready (request params: "wait_for_status=green&timeout=1s" )'
+                          exit 1
+                      fi
+                  fi
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 3
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            runAsUser: 100
+            runAsNonRoot: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 120
+      dnsPolicy: ClusterFirst
+      securityContext:
+        runAsUser: 100
+        fsGroup: 101
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: tzwken/es
+                    operator: In
+                    values:
+                      - elasticsearch
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - es
+              topologyKey: kubernetes.io/hostname
+      schedulerName: default-scheduler
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+  serviceName: elasticsearch
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 10
