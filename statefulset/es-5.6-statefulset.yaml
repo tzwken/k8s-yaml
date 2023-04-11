@@ -86,8 +86,7 @@ spec:
             - '-E'
             - discovery.zen.minimum_master_nodes=2
             - '-E'
-            - >-
-              discovery.zen.ping.unicast.hosts=es-0.elasticsearch.third-party.svc.cluster.local.,es-1.elasticsearch.third-party.svc.cluster.local.,es-2.elasticsearch.third-party.svc.cluster.local.
+            - discovery.zen.ping.unicast.hosts=elasticsearch
           ports:
             - name: http
               containerPort: 9200
@@ -148,7 +147,7 @@ spec:
                               ((NUM++))
                             fi
                           done
-                          if [ ${NUM} -lt 2 ]; then
+                          if [ ${NUM} -lt 1 ]; then
                             exit 0
                           fi
                           echo 'Cluster is not yet ready (request params: "wait_for_status=green&timeout=1s" )'
