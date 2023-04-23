@@ -1,0 +1,40 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ingress-nginx-prometheus
+  namespace: ingress-lan
+  labels:
+    app: inner-nginx-ingress
+spec:
+  ports:
+    - name: prometheus
+      protocol: TCP
+      port: 10254
+      targetPort: 10254
+  selector:
+    app: ingress-nginx
+
+
+---
+# matchLabels 需要选择对nginx-ingress的svc
+# namespaceSelector 需要配置为要nginx-ingress所在的命名空间
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: ingress-nginx
+  name: ingress-nginx
+  namespace: ingress-lan
+spec:
+  endpoints:
+    - interval: 30s
+      path: /metrics
+      port: prometheus
+      scrapeTimeout: 30s
+  jobLabel: saas-ali-monitor
+  namespaceSelector:
+    matchNames:
+      - ingress-lan
+  selector:
+    matchLabels:
+      app: inner-nginx-ingress
