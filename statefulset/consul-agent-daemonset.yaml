@@ -31,8 +31,9 @@ spec:
             - /bin/sh
             - '-c'
             - |
-              ip addr flush dev lo label lo:consul
-              ip addr add 169.254.254.169/32 dev lo label lo:consul
+              ip link delete nodeconsul
+              ip link add nodeconsul type dummy
+              ip addr add 169.254.254.169/32 dev nodeconsul
           securityContext:
             privileged: true
             runAsUser: 0
@@ -64,7 +65,7 @@ spec:
                - /bin/sh
                - '-c'
                - |
-                 ip addr flush dev lo label lo:consul
+                 ip link delete nodeconsul
                  sleep 3s
        securityContext:
           privileged: true
