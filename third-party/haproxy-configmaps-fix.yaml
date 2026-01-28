@@ -7,7 +7,7 @@ data:
             group root
             daemon
             nbproc 4
-            log /dev/log local0 err
+            log /dev/log local0 info
     defaults
             log     global
             timeout connect 8s
@@ -26,9 +26,9 @@ data:
             option dontlog-normal
             option tcpka
             balance source
-            server mysql-1 192.168.19.50:3306 check inter 10s fall 2 rise 2
-            server mysql-2 192.168.19.31:3306 check inter 10s fall 2 rise 2
-            server mysql-3 192.168.19.44:3306 check inter 10s fall 2 rise 2
+            server mysql-1 192.168.19.50:3306 check inter 10s fall 2 rise 2 on-marked-down shutdown-sessions
+            server mysql-2 192.168.19.31:3306 check inter 10s fall 2 rise 2 on-marked-down shutdown-sessions
+            server mysql-3 192.168.19.44:3306 check inter 10s fall 2 rise 2 on-marked-down shutdown-sessions
     listen mq
             bind 0.0.0.0:5672
             mode tcp
@@ -37,9 +37,9 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server mq-1 192.168.20.5:5672 check inter 10s fall 2 rise 2 weight 1
-            server mq-2 192.168.20.27:5672 check inter 10s fall 2 rise 2 weight 1
-            server mq-3 192.168.20.56:5672 check inter 10s fall 2 rise 2 weight 1
+            server mq-1 192.168.20.5:5672 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mq-2 192.168.20.27:5672 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mq-3 192.168.20.56:5672 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
     listen mongodb
             bind 0.0.0.0:17017
             mode tcp
@@ -48,9 +48,9 @@ data:
             option dontlog-normal
             option tcpka
             balance leastconn
-            server mongodb-1 192.168.20.5:17017 check inter 10s fall 2 rise 2 weight 1
-            server mongodb-2 192.168.20.27:17017 check inter 10s fall 2 rise 2 weight 1
-            server mongodb-3 192.168.20.56:17017 check inter 10s fall 2 rise 2 weight 1
+            server mongodb-1 192.168.20.5:17017 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mongodb-2 192.168.20.27:17017 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mongodb-3 192.168.20.56:17017 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
     listen elast-9200
             bind 0.0.0.0:9200
             mode tcp
@@ -70,20 +70,9 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server elast-1 192.168.20.3:9300 check inter 10s fall 2 rise 2 weight 1
-            server elast-2 192.168.20.37:9300 check inter 10s fall 2 rise 2 weight 1
-            server elast-3 192.168.20.13:9300 check inter 10s fall 2 rise 2 weight 1
-    listen redis-sentinel
-            bind 0.0.0.0:26379
-            mode tcp
-            option tcplog
-            option dontlognull
-            option dontlog-normal
-            option tcpka
-            balance roundrobin
-            server redis-1 192.168.20.3:26379 check inter 10s fall 2 rise 2 weight 1
-            server redis-2 192.168.20.37:26379 check inter 10s fall 2 rise 2 weight 1
-            server redis-3 192.168.20.13:26379 check inter 10s fall 2 rise 2 weight 1
+            server elast-1 192.168.20.3:9300 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server elast-2 192.168.20.37:9300 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server elast-3 192.168.20.13:9300 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
     listen redis
             bind 0.0.0.0:6379
             mode tcp
@@ -91,14 +80,15 @@ data:
             option dontlognull
             option dontlog-normal
             option tcpka
+            option srvtcpka
             balance roundrobin
             option tcp-check
             tcp-check send AUTH\ wintel\r\n
             tcp-check send info\ replication\r\n
             tcp-check expect string role:master
-            server redis-1 192.168.20.3:6379 maxconn 1024 check inter 5s
-            server redis-2 192.168.20.37:6379 maxconn 1024 check inter 5s
-            server redis-3 192.168.20.13:6379 maxconn 1024 check inter 5s
+            server redis-1 192.168.20.3:6379 maxconn 1024 check inter 5s fall 3 rise 2 on-marked-down shutdown-sessions
+            server redis-2 192.168.20.37:6379 maxconn 1024 check inter 5s fall 3 rise 2 on-marked-down shutdown-sessions
+            server redis-3 192.168.20.13:6379 maxconn 1024 check inter 5s fall 3 rise 2 on-marked-down shutdown-sessions
     listen fastdfs
             bind 0.0.0.0:22122
             mode tcp
