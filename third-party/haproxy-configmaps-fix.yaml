@@ -7,17 +7,16 @@ data:
             group root
             daemon
             nbproc 4
-            log /dev/log local0 info
+            # log /dev/log local0 info
     defaults
             log     global
             timeout connect 8s
             timeout queue 10s
-            timeout check 10s
+            timeout check 5s
             timeout client-fin 5s
             timeout server-fin 5s
-            timeout client 0
-            timeout server 0
-            #timeout tunnel 30m
+            timeout client 7200s
+            timeout server 7200s
     listen mysql
             bind 0.0.0.0:3306
             mode tcp
@@ -26,9 +25,9 @@ data:
             option dontlog-normal
             option tcpka
             balance source
-            server mysql-1 192.168.19.50:3306 check inter 10s fall 2 rise 2 on-marked-down shutdown-sessions
-            server mysql-2 192.168.19.31:3306 check inter 10s fall 2 rise 2 on-marked-down shutdown-sessions
-            server mysql-3 192.168.19.44:3306 check inter 10s fall 2 rise 2 on-marked-down shutdown-sessions
+            server mysql-1 192.168.19.50:3306 check inter 15s fall 2 rise 2 on-marked-down shutdown-sessions
+            server mysql-2 192.168.19.31:3306 check inter 15s fall 2 rise 2 on-marked-down shutdown-sessions
+            server mysql-3 192.168.19.44:3306 check inter 15s fall 2 rise 2 on-marked-down shutdown-sessions
     listen mq
             bind 0.0.0.0:5672
             mode tcp
@@ -37,9 +36,9 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server mq-1 192.168.20.5:5672 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
-            server mq-2 192.168.20.27:5672 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
-            server mq-3 192.168.20.56:5672 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mq-1 192.168.20.5:5672 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mq-2 192.168.20.27:5672 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mq-3 192.168.20.56:5672 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
     listen mongodb
             bind 0.0.0.0:17017
             mode tcp
@@ -48,9 +47,9 @@ data:
             option dontlog-normal
             option tcpka
             balance leastconn
-            server mongodb-1 192.168.20.5:17017 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
-            server mongodb-2 192.168.20.27:17017 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
-            server mongodb-3 192.168.20.56:17017 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mongodb-1 192.168.20.5:17017 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mongodb-2 192.168.20.27:17017 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server mongodb-3 192.168.20.56:17017 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
     listen elast-9200
             bind 0.0.0.0:9200
             mode tcp
@@ -59,9 +58,9 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server elast-1 192.168.20.3:9200 check inter 10s fall 2 rise 2 weight 1
-            server elast-2 192.168.20.37:9200 check inter 10s fall 2 rise 2 weight 1
-            server elast-3 192.168.20.13:9200 check inter 10s fall 2 rise 2 weight 1
+            server elast-1 192.168.20.3:9200 check inter 15s fall 2 rise 2 weight 1
+            server elast-2 192.168.20.37:9200 check inter 15s fall 2 rise 2 weight 1
+            server elast-3 192.168.20.13:9200 check inter 15s fall 2 rise 2 weight 1
     listen elast-9300
             bind 0.0.0.0:9300
             mode tcp
@@ -70,9 +69,9 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server elast-1 192.168.20.3:9300 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
-            server elast-2 192.168.20.37:9300 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
-            server elast-3 192.168.20.13:9300 check inter 10s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server elast-1 192.168.20.3:9300 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server elast-2 192.168.20.37:9300 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
+            server elast-3 192.168.20.13:9300 check inter 15s fall 2 rise 2 weight 1 on-marked-down shutdown-sessions
     listen redis
             bind 0.0.0.0:6379
             mode tcp
@@ -97,8 +96,8 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server fastdfs-1 192.168.20.3:22122 check inter 10s fall 2 rise 2 weight 1
-            server fastdfs-2 192.168.20.37:22122 check inter 10s fall 2 rise 2 weight 1
+            server fastdfs-1 192.168.20.3:22122 check inter 15s fall 2 rise 2 weight 1
+            server fastdfs-2 192.168.20.37:22122 check inter 15s fall 2 rise 2 weight 1
     listen nginx-fdfs
             bind 0.0.0.0:8080
             mode tcp
@@ -107,9 +106,9 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server nginx-fdfs-1 192.168.20.5:80 check inter 10s fall 2 rise 2 weight 1
-            server nginx-fdfs-2 192.168.20.27:80 check inter 10s fall 2 rise 2 weight 1
-            server nginx-fdfs-3 192.168.20.56:80 check inter 10s fall 2 rise 2 weight 1
+            server nginx-fdfs-1 192.168.20.5:80 check inter 15s fall 2 rise 2 weight 1
+            server nginx-fdfs-2 192.168.20.27:80 check inter 15s fall 2 rise 2 weight 1
+            server nginx-fdfs-3 192.168.20.56:80 check inter 15s fall 2 rise 2 weight 1
     listen reload-5015
             bind 0.0.0.0:5015
             mode tcp
@@ -118,7 +117,7 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server grpc 192.168.19.12:5015 check inter 10s fall 2 rise 2 weight 1
+            server grpc 192.168.19.12:5015 check inter 15s fall 2 rise 2 weight 1
     listen socket-5016
             bind 0.0.0.0:5016
             mode tcp
@@ -127,7 +126,7 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server grpc 192.168.19.12:5016 check inter 10s fall 2 rise 2 weight 1
+            server grpc 192.168.19.12:5016 check inter 15s fall 2 rise 2 weight 1
     listen grpc
             bind 0.0.0.0:5017
             mode tcp
@@ -136,7 +135,7 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server grpc 192.168.19.12:5017 check inter 10s fall 2 rise 2 weight 1
+            server grpc 192.168.19.12:5017 check inter 15s fall 2 rise 2 weight 1
     listen record
             bind 0.0.0.0:88
             mode tcp
@@ -145,8 +144,8 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server record1 192.168.19.12:88 check inter 10s fall 2 rise 2 weight 1
-            server record2 192.168.19.57:88 check inter 10s fall 2 rise 2 weight 1
+            server record1 192.168.19.12:88 check inter 15s fall 2 rise 2 weight 1
+            server record2 192.168.19.57:88 check inter 15s fall 2 rise 2 weight 1
     listen upload-5033
             bind 0.0.0.0:5033
             mode tcp
@@ -155,7 +154,7 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server record2 192.168.19.12:5033 check inter 10s fall 2 rise 2 weight 1
+            server record2 192.168.19.12:5033 check inter 15s fall 2 rise 2 weight 1
     listen wxbot
             bind 0.0.0.0:2888
             mode tcp
@@ -164,7 +163,7 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server wxbot 10.71.248.86:2888 check inter 10s fall 2 rise 2 weight 1
+            server wxbot 10.71.248.86:2888 check inter 15s fall 2 rise 2 weight 1
     listen oneid
             bind 0.0.0.0:2887
             mode tcp
@@ -173,7 +172,7 @@ data:
             option dontlog-normal
             option tcpka
             balance roundrobin
-            server wxbot 10.71.248.86:2887 check inter 10s fall 2 rise 2 weight 1
+            server wxbot 10.71.248.86:2887 check inter 15s fall 2 rise 2 weight 1
 kind: ConfigMap
 metadata:
   name: haproxy

@@ -95,7 +95,7 @@ spec:
             - sh
             - '-c'
             - >
-              /sbin/syslogd -O /proc/1/fd/1; exec haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg
+              /sbin/syslogd -O /proc/1/fd/1; haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg
         imagePullPolicy: IfNotPresent
         name: haproxy
         ports:
